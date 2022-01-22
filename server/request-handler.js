@@ -12,10 +12,6 @@ this file and include it in basic-server.js so that it actually works.
 
 **************************************************************/
 
-// var routes = {
-//   'classes/messages': requestHandler
-// };
-
 // These headers will allow Cross-Origin Resource Sharing (CORS).
 // This code allows this server to talk to websites that
 // are on different domains, for instance, your chat client.
@@ -28,11 +24,11 @@ this file and include it in basic-server.js so that it actually works.
 var defaultCorsHeaders = {
   'access-control-allow-origin': '*',
   'access-control-allow-methods': 'GET, POST, PUT, DELETE, OPTIONS',
-  'access-control-allow-headers': 'content-type, accept, authorization',
+  'access-control-allow-headers': 'content-type, accept, authorization, origin',
   'access-control-max-age': 10 // Seconds.
 };
 
-const data = [];
+var data = [];
 
 var requestHandler = function(request, response) {
   // Request and Response come from node's http module.
@@ -51,8 +47,8 @@ var requestHandler = function(request, response) {
   // console.logs in your code.
   //console.log('Serving request type ' + request.method + ' for url ' + request.url);
 
-  console.log(request);
-  console.log(data);
+  // console.log(request);
+  // console.log(data);
   // // The outgoing status.
   var statusCode = 404;
 
@@ -64,24 +60,44 @@ var requestHandler = function(request, response) {
   //
   // You will need to change this if you are sending something
   // other than plain text, like JSON or HTML.
-  headers['Content-Type'] = 'text/plain';
+
   //headers['route'] = '/classes/messages';
   if (request.method === 'GET' && request.url === '/classes/messages') {
     statusCode = 200;
+    headers['Content-Type'] = 'application/json';
+    response.writeHead(statusCode, headers);
+    return response.end(JSON.stringify(data));
   }
 
   if (request.method === 'POST' && request.url === '/classes/messages') {
     statusCode = 201;
+    headers['Content-Type'] = 'text/plain';
+    let body = [];
+    request.on('data', (chunk) => {
+      body.push(chunk);
+    }).on('end', () => {
+      body = Buffer.concat(body).toString();
+      let message = JSON.parse(body);
+      data.push(message);
+    });
+    // PARSE THE DATA OF THE BODY INTO AN OBJECT
 
-    if (request._postData) {
-      data.push(request._postData);
-    }
+
+    response.writeHead(statusCode, headers);
+    return response.end('OK');
+  }
+
+  if (request.method === 'OPTIONS' && request.url === '/classes/messages') {
+    statusCode = 200;
+    headers['Content-Type'] = 'text/plain';
+    response.writeHead(statusCode, headers);
+    return response.end('OK');
   }
 
   // .writeHead() writes to the request line and headers of the response,
   // which includes the status and all headers.
 
-  response.writeHead(statusCode, headers);
+
 
   // Make sure to always call response.end() - Node may not send
   // anything back to the client until you do. The string you pass to
@@ -91,9 +107,10 @@ var requestHandler = function(request, response) {
   // Calling .end "flushes" the response's internal buffer, forcing
   // node to actually send all the data over to the client.
   //console.log(data);
-  response.end(JSON.stringify(data));
+  response.writeHead(statusCode, headers);
+  return response.end('[]');
 };
 
 
 
-module.exports.requestHandler = requestHandler; // added this myself
+module.exports.requestHandler = requestHandler;
