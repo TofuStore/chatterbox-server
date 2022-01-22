@@ -76,9 +76,7 @@ var requestHandler = function(request, response) {
     request.on('data', (chunk) => {
       body.push(chunk);
     }).on('end', () => {
-      body = Buffer.concat(body).toString();
-      let message = JSON.parse(body);
-      data.push(message);
+      data.push(JSON.parse(body));
     });
     // PARSE THE DATA OF THE BODY INTO AN OBJECT
 
